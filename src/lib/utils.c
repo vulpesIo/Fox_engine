@@ -1,5 +1,6 @@
 #include "utlis.h"
-#include <glad.h>
+#include <glad/glad.h>
+#include <stdlib.h>
 
 double get_elapsed_seconds(struct timespec start, struct timespec end) {
     double start_sec = (double)start.tv_sec 

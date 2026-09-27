@@ -79,7 +79,8 @@ int main(void) {
         0.0f,  0.3f, 0.0f
     };
 
-    float vertices_shape_1[18];
+    float vertices_shape_1[9];
+    float vertices_shape_2[9];
 
     // shift left op
     for (int index = 0; index < 9; index ++) {
@@ -90,29 +91,19 @@ int main(void) {
         }
     }
 
-    for (int index = 9; index < 18; index++) {
-        int src = index - 9;
-        if (src % 3 == 0) {
-            vertices_shape_1[index] = shape_vertices[src] + 0.5f;
+    for (int index = 0; index < 9; index ++) {
+        if (index % 3 == 0) {
+            vertices_shape_2[index] = shape_vertices[index] + 0.5f;
         } else {
-            vertices_shape_1[index] = shape_vertices[src];
+            vertices_shape_2[index] = shape_vertices[index];
         }
     }
     
-    // float vertices[] = {
-    //     -0.5f, -0.5f, 0.0f,
-    //     0.0f, 0.5f, 0.0f,
-    //     0.5f, -0.5f, 0.0f,
-    //     // 0.5f,  0.5f, 0.0f,  // top right
-    //     // 0.5f, -0.5f, 0.0f,  // bottom right
-    //     // -0.5f, -0.5f, 0.0f,  // bottom left
-    //     // -0.5f,  0.5f, 0.0f   // top left 
-    // };
-    unsigned int indices[] = {  // note that we start from 0!
-        // 0, 1, 3,   // first triangle
-        // 1, 2, 3    // second triangle
+    unsigned int indices_1[] = {  // note that we start from 0!
         0, 1, 2,
-        3,4,5
+    };
+    unsigned int indices_2[] = {  // note that we start from 0!
+        0, 1, 2,
     };
 
     const char *vertexShaderSource = "#version 330 core\n"
@@ -166,19 +157,53 @@ int main(void) {
     glLinkProgram(shaderProgram);
 
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+        if (!success) {
+            glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+            printf("ERROR::SHADER::LINKING::COMPILATION_FAILED\n%s", infoLog);
+            return -1;
+        }
+
+        const char *fragmentShaderYellowSource = "#version 330 core\n"
+        "out vec4 FragColor;\n"
+        "void main()\n"
+        "{\n"
+        "   FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
+        "}\0";
+
+    unsigned int fragmentShaderYellow = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShaderYellow, 1, &fragmentShaderYellowSource, NULL);
+    glCompileShader(fragmentShaderYellow);
+
+    glGetShaderiv(fragmentShaderYellow, GL_COMPILE_STATUS, &success);
     if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        glGetShaderInfoLog(fragmentShaderYellow, 512, NULL, infoLog);
+        printf("ERROR::SHADER::FRAGMENT::YELLOW::COMPILATION_FAILED\n%s", infoLog);
+        return -1;
+    }
+
+    unsigned int shaderProgram2 = glCreateProgram();
+    glAttachShader(shaderProgram2, vertexShader);
+    glAttachShader(shaderProgram2, fragmentShaderYellow);
+    glLinkProgram(shaderProgram2);
+
+    glGetProgramiv(shaderProgram2, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram2, 512, NULL, infoLog);
         printf("ERROR::SHADER::LINKING::COMPILATION_FAILED\n%s", infoLog);
         return -1;
     }
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    glDeleteShader(fragmentShaderYellow);
 
     // TODO: check if shader was remmoved
 
     // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW)
-    Buffer* mesh_buffer = create_mesh_buffers(vertices_shape_1, sizeof(vertices_shape_1), indices, sizeof(indices), GL_STATIC_DRAW);
+    Buffer* mesh_buffers[2];
+    mesh_buffers[0] = create_mesh_buffers(vertices_shape_1, sizeof(vertices_shape_1), indices_1, sizeof(indices_1), GL_STATIC_DRAW);
+    mesh_buffers[1] = create_mesh_buffers(vertices_shape_2, sizeof(vertices_shape_2), indices_2, sizeof(indices_2), GL_STATIC_DRAW);
+    
     {
         // unsigned int VBO, VAO, EBO;
         // // ---------------------------------------------------------------------------------
@@ -235,16 +260,22 @@ int main(void) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);         
 
-        // rendering commands here
-        glUseProgram(shaderProgram);
+        // CAUTION:
+        for (int index = 0; index < 2; index++) {
+            // rendering commands here
+            glUseProgram(index == 0 ? shaderProgram : shaderProgram2);
+            glBindVertexArray(mesh_buffers[index]->VAO);
+            glDrawElements(GL_LINE_LOOP, 3, GL_UNSIGNED_INT, 0);
+        }
         // re-binding the VAO is all we need - it already remembers both the
         // VBO's attribute layout AND the EBO, so there's no need to touch
         // GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER again here
-        glBindVertexArray(mesh_buffer->VAO);
+        // glBindVertexArray(mesh_buffer1->VAO);
+        
         // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         // glDrawElements(GL_LINE_LOOP, 6, GL_UNSIGNED_INT, 0);
         // glDrawArrays(GL_LINE_LOOP, 6, GL_UNSIGNED_INT, 0);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // glDrawArrays(GL_TRIANGLES, 0, 6);
         // glDrawElements()
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

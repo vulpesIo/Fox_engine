@@ -2,7 +2,7 @@
 #define UTILS_H
 
 #include <time.h>
-#include <glad.h>
+#include <glad/glad.h>
 
 
 typedef struct a {
