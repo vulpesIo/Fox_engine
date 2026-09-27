@@ -34,8 +34,6 @@ void process_input(GLFWwindow* window) {
     }
 }
 
-
-
 int main(void) {
     struct timespec start_time, end_time;
 
@@ -75,16 +73,47 @@ int main(void) {
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    float vertices[] = {
-        0.5f,  0.5f, 0.0f,  // top right
-        0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+    float shape_vertices[] = {
+        -0.3f, -0.3f, 0.0f,
+        0.3f, -0.3f, 0.0f,
+        0.0f,  0.3f, 0.0f
     };
+
+    float vertices_shape_1[18];
+
+    // shift left op
+    for (int index = 0; index < 9; index ++) {
+        if (index % 3 == 0) {
+            vertices_shape_1[index] = shape_vertices[index] - 0.5;
+        }else {
+            vertices_shape_1[index] = shape_vertices[index];
+        }
+    }
+
+    for (int index = 9; index < 18; index++) {
+        int src = index - 9;
+        if (src % 3 == 0) {
+            vertices_shape_1[index] = shape_vertices[src] + 0.5f;
+        } else {
+            vertices_shape_1[index] = shape_vertices[src];
+        }
+    }
+    
+    // float vertices[] = {
+    //     -0.5f, -0.5f, 0.0f,
+    //     0.0f, 0.5f, 0.0f,
+    //     0.5f, -0.5f, 0.0f,
+    //     // 0.5f,  0.5f, 0.0f,  // top right
+    //     // 0.5f, -0.5f, 0.0f,  // bottom right
+    //     // -0.5f, -0.5f, 0.0f,  // bottom left
+    //     // -0.5f,  0.5f, 0.0f   // top left 
+    // };
     unsigned int indices[] = {  // note that we start from 0!
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
-    };  
+        // 0, 1, 3,   // first triangle
+        // 1, 2, 3    // second triangle
+        0, 1, 2,
+        3,4,5
+    };
 
     const char *vertexShaderSource = "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
@@ -148,47 +177,51 @@ int main(void) {
 
     // TODO: check if shader was remmoved
 
-    unsigned int VBO, VAO, EBO;
-    // ---------------------------------------------------------------------------------
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    //   VBO = raw vertex data (positions) sitting in GPU memory
-    //   VAO = remembers HOW to read that data (attribute layout) + which EBO goes with it
-    //   EBO = index data, so the two triangles can share their 2 common corners
-    //         instead of each corner being duplicated in the VBO
-    // ---------------------------------------------------------------------------------
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW)
+    Buffer* mesh_buffer = create_mesh_buffers(vertices_shape_1, sizeof(vertices_shape_1), indices, sizeof(indices), GL_STATIC_DRAW);
+    {
+        // unsigned int VBO, VAO, EBO;
+        // // ---------------------------------------------------------------------------------
+        // // set up vertex data (and buffer(s)) and configure vertex attributes
+        // //   VBO = raw vertex data (positions) sitting in GPU memory
+        // //   VAO = remembers HOW to read that data (attribute layout) + which EBO goes with it
+        // //   EBO = index data, so the two triangles can share their 2 common corners
+        // //         instead of each corner being duplicated in the VBO
+        // // ---------------------------------------------------------------------------------
+        // glGenVertexArrays(1, &VAO);
+        // glGenBuffers(1, &VBO);
+        // glGenBuffers(1, &EBO);
 
-    // 1. bind the VAO first - every buffer bind / attribute call below gets
-    //    "recorded" into this VAO until we unbind it in step 5
-    glBindVertexArray(VAO);
+        // // 1. bind the VAO first - every buffer bind / attribute call below gets
+        // //    "recorded" into this VAO until we unbind it in step 5
+        // glBindVertexArray(VAO);
 
-    // 2. copy vertex positions into the VBO's GPU memory
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        // // 2. copy vertex positions into the VBO's GPU memory
+        // glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_shape_1), vertices_shape_1, GL_STATIC_DRAW);
 
-    // 3. copy index data into the EBO's GPU memory
-    //    (this bind is what gets stored inside the currently-bound VAO)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        // // 3. copy index data into the EBO's GPU memory
+        // //    (this bind is what gets stored inside the currently-bound VAO)
+        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    // 4. tell attribute slot 0 (aPos in the vertex shader) how to read the VBO:
-    //    3 floats per vertex, not normalized, tightly packed, starting at offset 0
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+        // // 4. tell attribute slot 0 (aPos in the vertex shader) how to read the VBO:
+        // //    3 floats per vertex, not normalized, tightly packed, starting at offset 0
+        // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        // glEnableVertexAttribArray(0);
 
-    // glVertexAttribPointer already recorded the VBO into this attribute slot,
-    // so it's safe to unbind GL_ARRAY_BUFFER now - the VAO remembers it either way
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // // glVertexAttribPointer already recorded the VBO into this attribute slot,
+        // // so it's safe to unbind GL_ARRAY_BUFFER now - the VAO remembers it either way
+        // glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // do NOT unbind GL_ELEMENT_ARRAY_BUFFER here - that binding lives inside
-    // the VAO itself, so unbinding it now would remove the EBO from this VAO
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        // // do NOT unbind GL_ELEMENT_ARRAY_BUFFER here - that binding lives inside
+        // // the VAO itself, so unbinding it now would remove the EBO from this VAO
+        // // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    // 5. unbind the VAO so other glBindVertexArray/attribute calls elsewhere
-    //    in the program can't accidentally change this VAO's setup
-    glBindVertexArray(0);
+        // // 5. unbind the VAO so other glBindVertexArray/attribute calls elsewhere
+        // //    in the program can't accidentally change this VAO's setup
+        // glBindVertexArray(0);
+    }
 
     // render loop
     // -----------
@@ -207,8 +240,12 @@ int main(void) {
         // re-binding the VAO is all we need - it already remembers both the
         // VBO's attribute layout AND the EBO, so there's no need to touch
         // GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER again here
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(mesh_buffer->VAO);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // glDrawElements(GL_LINE_LOOP, 6, GL_UNSIGNED_INT, 0);
+        // glDrawArrays(GL_LINE_LOOP, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // glDrawElements()
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -222,7 +259,6 @@ int main(void) {
 
         if (elapsed_time_ms < ms_cap) {
             double duration = ms_cap / elapsed_time_ms;
-            printf("loop ran too fast slowing down.. %f ms left\r\n", duration);
             sleep_ms((int)duration);
         }
     }
