@@ -37,7 +37,6 @@ void process_input(GLFWwindow* window) {
 
 
 int main(void) {
-    unsigned int VBO, VAO, EBO;
     struct timespec start_time, end_time;
 
     int frame_cap = 60;
@@ -149,6 +148,7 @@ int main(void) {
 
     // TODO: check if shader was remmoved
 
+    unsigned int VBO, VAO, EBO;
     // ---------------------------------------------------------------------------------
     // set up vertex data (and buffer(s)) and configure vertex attributes
     //   VBO = raw vertex data (positions) sitting in GPU memory
