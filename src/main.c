@@ -265,7 +265,7 @@ int main(void) {
             // rendering commands here
             glUseProgram(index == 0 ? shaderProgram : shaderProgram2);
             glBindVertexArray(mesh_buffers[index]->VAO);
-            glDrawElements(GL_LINE_LOOP, 3, GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_LINE_LOOP, mesh_buffers[index]->index_count, GL_UNSIGNED_INT, 0);
         }
         // re-binding the VAO is all we need - it already remembers both the
         // VBO's attribute layout AND the EBO, so there's no need to touch

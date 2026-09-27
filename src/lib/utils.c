@@ -14,6 +14,8 @@ double get_elapsed_seconds(struct timespec start, struct timespec end) {
 
 Buffer* create_mesh_buffers(float vertices[], size_t vertices_size, int indices[], size_t indices_size, GLenum usage) {
     Buffer* buf = malloc(sizeof(Buffer));
+    
+    buf->index_count = indices_size / sizeof(unsigned int);
 
     // ---------------------------------------------------------------------------------
     // set up vertex data (and buffer(s)) and configure vertex attributes

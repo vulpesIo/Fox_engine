@@ -9,6 +9,7 @@ typedef struct a {
     unsigned int VBO;
     unsigned int VAO;
     unsigned int EBO;
+    int index_count;
 } Buffer;
 
 double get_elapsed_seconds(struct timespec start, struct timespec end);
