@@ -7,6 +7,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 add_executable(opengl_school
     src/main.c
     src/lib/utils.c
+    src/lib/shader.c
     external/glad/src/glad.c
 )
 
