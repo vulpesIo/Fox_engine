@@ -20,6 +20,7 @@
 
 #include "lib/utlis.h"
 #include "lib/shader.h"
+#include "lib/stb_image.h"
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
@@ -82,6 +83,30 @@ int main(void) {
         0.3f, -0.3f, 0.0f,  0.0f, 1.0f, 0.0f,
         0.0f,  0.3f, 0.0f,  0.0f, 0.0f, 1.0f
     };
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load and generate the texture
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load("src/assets/container.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        fprintf(stderr, "ERROR::FIALED_TO_LOAD_TEXTURE;\n");
+        fflush(stderr);
+        exit(1);
+    }
+    stbi_image_free(data);
 
     // float vertices_shape_1[9];
     // float vertices_shape_2[9];
