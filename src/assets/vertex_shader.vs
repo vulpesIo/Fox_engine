@@ -18,10 +18,11 @@ out vec3 ourColor;
 
 uniform float xOffset;
 uniform float yOffset;
+uniform float scaleF = 1.0;
 
 void main()
 {
-    gl_Position = vec4(aPos.x + xOffset, -aPos.y + yOffset , aPos.z, 1.0); // just add a - to the y position
+    gl_Position = vec4((aPos.x + xOffset) * scaleF, (-aPos.y + yOffset) * scaleF , (aPos.z) * scaleF, 1.0); // just add a - to the y position
     ourColor = aColor;
 }
 
