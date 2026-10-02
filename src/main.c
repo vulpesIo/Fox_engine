@@ -94,6 +94,7 @@ int main(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // load and generate the texture
     int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(1);
     unsigned char *data = stbi_load("src/assets/container.jpg", &width, &height, &nrChannels, 0);
     if (data)
     {
@@ -159,20 +160,18 @@ int main(void) {
 
         timespec_get(&end_time, TIME_UTC);
         double elapsed_time_ms = (get_elapsed_seconds(start_time, end_time) * 1000.0);
-        double ms_cap = 100.0 / frame_cap;
+        double ms_cap = 1000.0 / frame_cap;
 
         if (elapsed_time_ms < ms_cap) {
-            double duration = ms_cap / elapsed_time_ms;
-            sleep_ms((int)duration);
+            double sleep_duration = ms_cap - elapsed_time_ms;
+            sleep_ms((int)sleep_duration);
         }
     }
 
 
-    for (int index = 0; index < 2; index++) {
-        if (mesh_buffers != NULL) {
-            free(mesh_buffers);
-            mesh_buffers = NULL;
-        }
+    if (mesh_buffers != NULL) {
+        free(mesh_buffers);
+        mesh_buffers = NULL;
     }
 
         // glfw: terminate, clearing all previously allocated GLFW resources.
