@@ -78,10 +78,11 @@ int main(void) {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     float vertices_shape_1[] = {
-        // positions          // colors           // texture
-        -0.3f, -0.3f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
-        0.3f, -0.3f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f,
-        0.0f,  0.3f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f
+        // positions          // colors           // texture coords
+        0.5f,  0.5f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 1.0f,   // top right
+        0.5f, -0.5f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,  0.5f, 0.5f, 0.5f,   0.0f, 0.0f,   // bottom left
+        -0.5f,  0.5f, 0.0f,  0.5f, 0.5f, 0.5f,   0.0f, 1.0f    // top left 
     };
 
     unsigned int texture;
@@ -112,7 +113,8 @@ int main(void) {
     // float vertices_shape_1[9];
     // float vertices_shape_2[9];
     unsigned int indices_1[] = {  // note that we start from 0!
-        0, 1, 2,
+        0, 1, 3,  // First triangle:  Top-Right -> Bottom-Right -> Top-Left
+        1, 2, 3   // Second triangle: Bottom-Right -> Bottom-Left -> Top-Left
     };
 
     // Shader ourShader = shader_create("../src/assets/vertex_shader.vert", "../src/assets/fragment_shader.frag");
@@ -140,9 +142,9 @@ int main(void) {
         // float timeValue3 = glfwGetTime();
         // float blueValue = (sin(timeValue3)/ 2.0f) + 0.5f;
         shader_use(&ourShader);
-        shader_set_float(&ourShader,"xOffset", 0.5f);
-        shader_set_float(&ourShader,"yOffset", 0.5f);
-        shader_set_float(&ourShader,"scaleF", 0.5f);
+        // shader_set_float(&ourShader,"xOffset", 0.5f);
+        // shader_set_float(&ourShader,"yOffset", 0.5f);
+        // shader_set_float(&ourShader,"scaleF", 0.5f);
         // shader_set_float(&ourShader,"yOffset", 0.0f);
         // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         // rendering commands here

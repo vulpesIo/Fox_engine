@@ -45,13 +45,15 @@ Buffer* create_mesh_buffers(float vertices[], size_t vertices_size, int indices[
 
     // 4. tell attribute slot 0 (aPos in the vertex shader) how to read the VBO:
     //    3 floats per vertex, not normalized, tightly packed, starting at offset 0
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
-    
-    
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
+        
     // glVertexAttribPointer already recorded the VBO into this attribute slot,
     // so it's safe to unbind GL_ARRAY_BUFFER now - the VAO remembers it either way
     glBindBuffer(GL_ARRAY_BUFFER, 0);
