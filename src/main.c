@@ -78,10 +78,10 @@ int main(void) {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     float vertices_shape_1[] = {
-        // positions        // colors
-        -0.3f, -0.3f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.3f, -0.3f, 0.0f,  0.0f, 1.0f, 0.0f,
-        0.0f,  0.3f, 0.0f,  0.0f, 0.0f, 1.0f
+        // positions          // colors           // texture
+        -0.3f, -0.3f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
+        0.3f, -0.3f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f,
+        0.0f,  0.3f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f
     };
 
     unsigned int texture;
@@ -139,12 +139,15 @@ int main(void) {
         // float timeValue3 = glfwGetTime();
         // float blueValue = (sin(timeValue3)/ 2.0f) + 0.5f;
         shader_use(&ourShader);
-        // shader_set_float(&ourShader,"xOffset", 0.0f);
+        shader_set_float(&ourShader,"xOffset", 0.5f);
+        shader_set_float(&ourShader,"yOffset", 0.5f);
+        shader_set_float(&ourShader,"scaleF", 0.5f);
         // shader_set_float(&ourShader,"yOffset", 0.0f);
         // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         // rendering commands here
         // glUseProgram(shaderProgram);
 
+        glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(mesh_buffers->VAO);
         glDrawElements(GL_TRIANGLES, mesh_buffers->index_count, GL_UNSIGNED_INT, 0);
 
