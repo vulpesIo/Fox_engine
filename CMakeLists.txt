@@ -8,6 +8,7 @@ add_executable(opengl_school
     src/main.c
     src/lib/utils.c
     src/lib/shader.c
+    src/lib/stb_image.c
     external/glad/src/glad.c
 )
 
