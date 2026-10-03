@@ -85,30 +85,54 @@ int main(void) {
         -0.5f,  0.5f, 0.0f,  0.5f, 0.5f, 0.5f,   0.0f, 1.0f    // top left 
     };
 
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    unsigned int texture1;
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
     // set the texture wrapping/filtering options (on the currently bound texture object)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     // load and generate the texture
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(1);
-    unsigned char *data = stbi_load("src/assets/container.jpg", &width, &height, &nrChannels, 0);
-    if (data)
+    unsigned char *containerTexture = stbi_load("src/assets/container.jpg", &width, &height, &nrChannels, 0);
+    if (containerTexture)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, containerTexture);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
     {
-        fprintf(stderr, "ERROR::FIALED_TO_LOAD_TEXTURE;\n");
+        fprintf(stderr, "ERROR::FAILED_TO_LOAD_TEXTURE;\n");
         fflush(stderr);
         exit(1);
     }
-    stbi_image_free(data);
+    stbi_image_free(containerTexture);
+
+    
+    unsigned int texture2;
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    unsigned char *faceTexture = stbi_load("src/assets/awesomeface.png", &width, &height, &nrChannels, 0);
+    if (faceTexture)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, faceTexture);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }else {
+        fprintf(stderr, "ERROR::FAILED_TO_LOAD_TEXTURE;\n");
+        fflush(stderr);
+        exit(1);
+    }
+    stbi_image_free(faceTexture);
+
 
     // float vertices_shape_1[9];
     // float vertices_shape_2[9];
@@ -123,8 +147,13 @@ int main(void) {
     // TODO: check if shader was remmoved
     Buffer* mesh_buffers = create_mesh_buffers(vertices_shape_1, sizeof(vertices_shape_1), indices_1, sizeof(indices_1), GL_STATIC_DRAW);
 
+    shader_use(&ourShader);
+    
+    shader_set_int(&ourShader, "texture1", 0);
+    shader_set_int(&ourShader, "texture2", 1);
+    
     // render loop
-    // -----------
+    // -----------    
     while (!glfwWindowShouldClose(window)) {
         timespec_get(&start_time, TIME_UTC);
         // input
@@ -139,18 +168,12 @@ int main(void) {
         float timeValue1 = glfwGetTime();
         float greenValue = (sin(timeValue1)/ 2.0f) + 0.5f;
 
-        // float timeValue3 = glfwGetTime();
-        // float blueValue = (sin(timeValue3)/ 2.0f) + 0.5f;
-        shader_use(&ourShader);
-        // shader_set_float(&ourShader,"xOffset", 0.5f);
-        // shader_set_float(&ourShader,"yOffset", 0.5f);
-        // shader_set_float(&ourShader,"scaleF", 0.5f);
-        // shader_set_float(&ourShader,"yOffset", 0.0f);
-        // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        // rendering commands here
-        // glUseProgram(shaderProgram);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glActiveTexture(GL_TEXTURE0);// activate the texture unit first before binding texture
+        glBindTexture(GL_TEXTURE_2D, texture1);// 
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);// 
+        
         glBindVertexArray(mesh_buffers->VAO);
         glDrawElements(GL_TRIANGLES, mesh_buffers->index_count, GL_UNSIGNED_INT, 0);
 
