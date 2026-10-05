@@ -156,11 +156,8 @@ int main(void) {
     shader_set_int(&ourShader, "texture1", 0);
     shader_set_int(&ourShader, "texture2", 1);
     
+    // vec4 vec = {1.0f, 0.0f, 0.0f, 1.0f};
     
-    vec4 vec = {1.0f, 0.0f, 0.0f, 1.0f};
-
-    mat4 trans;
-
     // render loop
     // -----------    
     while (!glfwWindowShouldClose(window)) {
@@ -168,6 +165,31 @@ int main(void) {
         // input
         // -----
         process_input(window);
+        
+        mat4 model, view, projection;
+        glm_mat4_identity(model);
+        glm_mat4_identity(view);
+        glm_mat4_identity(projection);
+
+        // 2. Apply transformations
+        // Model: Rotate the quad slightly over time
+        glm_rotate(model, glm_rad(-55.0f), (vec3){1.0f, 0.0f, 0.0f}); 
+        
+        // View: Move the camera back 3 units so the object isn't inside our face
+        glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
+        
+        // Projection: Use window_width and window_height (NOT width/height from the texture)
+        glm_perspective(glm_rad(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f, projection);
+
+        // 3. Send the matrices to the shader's uniform locations
+        unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
+
+        unsigned int viewLoc  = glGetUniformLocation(ourShader.ID, "view");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
+
+        unsigned int projLoc  = glGetUniformLocation(ourShader.ID, "projection");
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float *)projection);
 
         // clear screen at the start of read render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -175,8 +197,6 @@ int main(void) {
 
         // CAUTION:
         float timeValue1 = glfwGetTime();
-        float greenValue = (sin(timeValue1)/ 2.0f) + 0.5f;
-
 
         glActiveTexture(GL_TEXTURE0);// activate the texture unit first before binding texture
         glBindTexture(GL_TEXTURE_2D, texture1);// 
@@ -184,15 +204,6 @@ int main(void) {
         glBindTexture(GL_TEXTURE_2D, texture2);// 
         
         glBindVertexArray(mesh_buffers->VAO);
-
-        glm_mat4_identity(trans);
-
-        glm_scale(trans, (vec3){-0.5f, -0.5f, 0.0f});
-        glm_translate(trans, (vec3){0.5f, -0.5f, 0.0f});
-        glm_rotate(trans, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
-
-        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)trans);
 
         glDrawElements(GL_TRIANGLES, mesh_buffers->index_count, GL_UNSIGNED_INT, 0);
 
