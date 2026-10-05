@@ -22,6 +22,8 @@
 #include "lib/shader.h"
 #include "lib/stb_image.h"
 
+#include "cglm/cglm.h"
+
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int hight) {
@@ -85,6 +87,8 @@ int main(void) {
         -0.5f,  0.5f, 0.0f,  0.5f, 0.5f, 0.5f,   0.0f, 1.0f    // top left 
     };
 
+    // =======================  =======================
+
     unsigned int texture1;
     glGenTextures(1, &texture1);
     glBindTexture(GL_TEXTURE_2D, texture1);
@@ -92,7 +96,7 @@ int main(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // load and generate the texture
     int width, height, nrChannels;
@@ -152,6 +156,11 @@ int main(void) {
     shader_set_int(&ourShader, "texture1", 0);
     shader_set_int(&ourShader, "texture2", 1);
     
+    
+    vec4 vec = {1.0f, 0.0f, 0.0f, 1.0f};
+
+    mat4 trans;
+
     // render loop
     // -----------    
     while (!glfwWindowShouldClose(window)) {
@@ -175,6 +184,16 @@ int main(void) {
         glBindTexture(GL_TEXTURE_2D, texture2);// 
         
         glBindVertexArray(mesh_buffers->VAO);
+
+        glm_mat4_identity(trans);
+
+        glm_scale(trans, (vec3){-0.5f, -0.5f, 0.0f});
+        glm_translate(trans, (vec3){0.5f, -0.5f, 0.0f});
+        glm_rotate(trans, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
+
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)trans);
+
         glDrawElements(GL_TRIANGLES, mesh_buffers->index_count, GL_UNSIGNED_INT, 0);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
