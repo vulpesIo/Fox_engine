@@ -79,12 +79,56 @@ int main(void) {
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+    // float vertices_shape_1[] = {
+    //     // positions          // colors           // texture coords
+    //     0.5f,  0.5f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 1.0f,   // top right
+    //     0.5f, -0.5f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f,   // bottom right
+    //     -0.5f, -0.5f, 0.0f,  0.5f, 0.5f, 0.5f,   0.0f, 0.0f,   // bottom left
+    //     -0.5f,  0.5f, 0.0f,  0.5f, 0.5f, 0.5f,   0.0f, 1.0f    // top left 
+    // };
+
     float vertices_shape_1[] = {
-        // positions          // colors           // texture coords
-        0.5f,  0.5f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 1.0f,   // top right
-        0.5f, -0.5f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,  0.5f, 0.5f, 0.5f,   0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,  0.5f, 0.5f, 0.5f,   0.0f, 1.0f    // top left 
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
     // =======================  =======================
@@ -173,7 +217,7 @@ int main(void) {
 
         // 2. Apply transformations
         // Model: Rotate the quad slightly over time
-        glm_rotate(model, glm_rad(-55.0f), (vec3){1.0f, 0.0f, 0.0f}); 
+        glm_rotate(model, (float)glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
         
         // View: Move the camera back 3 units so the object isn't inside our face
         glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
@@ -205,8 +249,9 @@ int main(void) {
         
         glBindVertexArray(mesh_buffers->VAO);
 
-        glDrawElements(GL_TRIANGLES, mesh_buffers->index_count, GL_UNSIGNED_INT, 0);
-
+        // glDrawElements(GL_TRIANGLES, mesh_buffers->index_count, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
