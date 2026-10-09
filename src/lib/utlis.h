@@ -4,7 +4,6 @@
 #include <time.h>
 #include <glad/glad.h>
 
-
 typedef struct a {
     unsigned int VBO;
     unsigned int VAO;
@@ -13,6 +12,8 @@ typedef struct a {
 } Buffer;
 
 double get_elapsed_seconds(struct timespec start, struct timespec end);
+
+// void load_model(mat4 )
 
 Buffer* create_mesh_buffers(float vertices[], size_t vertices_size, int indices[], size_t indices_size, GLenum usage);
 

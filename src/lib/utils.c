@@ -1,22 +1,41 @@
 #include "utlis.h"
 #include <glad/glad.h>
 #include <stdlib.h>
+#include "cglm/cglm.h"
 
 double get_elapsed_seconds(struct timespec start, struct timespec end) {
-    double start_sec = (double)start.tv_sec 
+    // timespec stores whole seconds and a nanosecond remainder. Convert both
+    // endpoints to the same unit before subtracting; callers can multiply the
+    // result by 1000 when they need milliseconds.
+    double start_sec = (double)start.tv_sec
                    + ((double)start.tv_nsec / 1000000000.0);
 
     double end_sec = (double)end.tv_sec
                    + ((double)end.tv_nsec / 1000000000.0);
-                   
+
     return end_sec - start_sec;
 }
 
+// void load_model(mat4 model);
+
+void camera_reposition(vec3 targetPosition, vec3 cameraPos) {
+    vec3 direction;
+
+    glm_vec3_sub(cameraPos, targetPosition, direction);
+    glm_normalize(direction);
+}
 
 
+// Upload vertex/index bytes and capture the vertex-input configuration in a
+// VAO. The current layout is deliberately fixed: location 0 is vec3 position,
+// location 1 is a constant white color, and location 2 is vec2 UV, all using
+// a five-float interleaved record. The caller must provide a current OpenGL
+// context and arrays/sizes matching this layout.
 Buffer* create_mesh_buffers(float vertices[], size_t vertices_size, int indices[], size_t indices_size, GLenum usage) {
     Buffer* buf = malloc(sizeof(Buffer));
-    
+
+    // This is an element count, not a byte count. The current main.c draw
+    // path uses glDrawArrays, so it does not consume this value.
     buf->index_count = indices_size / sizeof(unsigned int);
 
     // ---------------------------------------------------------------------------------
@@ -33,7 +52,7 @@ Buffer* create_mesh_buffers(float vertices[], size_t vertices_size, int indices[
     // 1. bind the VAO first - every buffer bind / attribute call below gets
     //    "recorded" into this VAO until we unbind it in step 5
     glBindVertexArray(buf->VAO);
-    
+
     // 2. copy vertex positions into the VBO's GPU memory
     glBindBuffer(GL_ARRAY_BUFFER, buf->VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices, usage);
@@ -50,17 +69,17 @@ Buffer* create_mesh_buffers(float vertices[], size_t vertices_size, int indices[
     glEnableVertexAttribArray(0);
 
     // 2. Disable the color array (layout 1) and force it to white so textures don't render black
-    glDisableVertexAttribArray(1); 
+    glDisableVertexAttribArray(1);
     glVertexAttrib3f(1, 1.0f, 1.0f, 1.0f);
-    
+
     // 3. Texture (layout 2 in your current shader)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(2);
-        
+
     // glVertexAttribPointer already recorded the VBO into this attribute slot,
     // so it's safe to unbind GL_ARRAY_BUFFER now - the VAO remembers it either way
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
+
     // do NOT unbind GL_ELEMENT_ARRAY_BUFFER here - that binding lives inside
     // the VAO itself, so unbinding it now would remove the EBO from this VAO
     // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

@@ -2,8 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <glad/glad.h>
+#include <cglm/cglm.h>
 
 long get_file_size(const char *filename) {
+    // Shader source is read into a NUL-terminated buffer below. Use binary
+    // mode so ftell/fread report the exact byte length without newline
+    // translation, then close the handle on every handled error path.
     FILE *fp = fopen(filename, "rb");
 
     if (fp == NULL) {
@@ -33,6 +37,11 @@ long get_file_size(const char *filename) {
 }
 
 Shader shader_create(const char *vertexPath, const char *fragmentPath) {
+    // The caller must already have made an OpenGL context current and loaded
+    // GLAD: every glCreateShader/glCompileShader call below needs that context.
+    // Read each source into its own temporary buffer; OpenGL copies the source
+    // when glShaderSource is called, so the CPU buffer can be freed after the
+    // corresponding compile request.
     long vertexFileSize = get_file_size(vertexPath);
     long fragmentFileSize = get_file_size(fragmentPath);
     
@@ -99,6 +108,9 @@ Shader shader_create(const char *vertexPath, const char *fragmentPath) {
     fragmentFileContentBuffer[bytes_read] = '\0';
     fclose(fp);
     
+    // Compilation and linking are separate failure points. Shader info logs
+    // explain source errors; the program info log explains interface/linking
+    // errors such as incompatible shader inputs and outputs.
     unsigned int vertex, fragment;
     int success;
     char infoLog[512];
@@ -144,6 +156,10 @@ Shader shader_create(const char *vertexPath, const char *fragmentPath) {
         exit(1);
     }
 
+    // Once a successful link has attached the compiled shader code to the
+    // program, the temporary shader objects can be deleted. The returned
+    // program remains alive until its ID is explicitly deleted or the context
+    // is destroyed.
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 
@@ -151,10 +167,13 @@ Shader shader_create(const char *vertexPath, const char *fragmentPath) {
 }
 
 void shader_use(Shader *shader) {
+    // Uniform setters update the currently active program, so select the
+    // program before setting its uniforms and issuing draws.
     glUseProgram(shader->ID);
 }
 
 void shader_set_bool(Shader *shader,char* name, int value) {
+    // GLSL bool uniforms are set through the integer uniform API.
     glUniform1i(glGetUniformLocation(shader->ID, name), (int)value); 
 }
 
@@ -166,4 +185,22 @@ void shader_set_int(Shader *shader,char* name, int value)
 void shader_set_float(Shader *shader,char* name, float value)
 { 
     glUniform1f(glGetUniformLocation(shader->ID, name), value); 
+}
+
+// Matrix data from cglm is passed directly to OpenGL with transpose disabled.
+// Keep the matrix dimensions and uniform name consistent with the shader.
+void shader_set_mat2(Shader *shader, char *name, mat2 value) {
+    glUniformMatrix2fv(glGetUniformLocation(shader->ID, name), 1, GL_FALSE, 
+        (const float *)value
+    );
+}
+void shader_set_mat3(Shader *shader, char *name, mat3 value) {
+    glUniformMatrix3fv(glGetUniformLocation(shader->ID, name), 1, GL_FALSE, 
+        (const float *)value
+    );
+}
+void shader_set_mat4(Shader *shader, char *name, mat4 value) {
+    glUniformMatrix4fv(glGetUniformLocation(shader->ID, name), 1, GL_FALSE, 
+        (const float *)value
+    );
 }
