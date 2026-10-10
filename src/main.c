@@ -234,7 +234,6 @@ int main(void) {
     shader_set_int(&ourShader, "texture2", 1);
 
     mat4 model;
-    mat4 view;
 
     vec3 cameraPos = {0.0f, 0.0f, 3.0f};
     vec3 targetPos = {0.0f, 0.0f, 0.0f};
@@ -264,7 +263,7 @@ int main(void) {
         // -----
         process_input(window);
 
-        mat4 model, projection;
+        mat4 model, view, projection;
         // glm_mat4_identity(model);
         glm_mat4_identity(view);
         glm_mat4_identity(projection);
