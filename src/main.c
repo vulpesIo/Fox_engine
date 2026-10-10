@@ -233,12 +233,25 @@ int main(void) {
     shader_set_int(&ourShader, "texture1", 0);
     shader_set_int(&ourShader, "texture2", 1);
 
+    mat4 model;
+    mat4 view;
+
     vec3 cameraPos = {0.0f, 0.0f, 3.0f};
     vec3 targetPos = {0.0f, 0.0f, 0.0f};
+    vec3 up = {0.0f, 1.0f, 0.0f};
+
     vec3 direction;
+    vec3 cameraRight;
+    vec3 camreaUp;
 
     glm_vec3_sub(cameraPos, targetPos, direction);
     glm_normalize(direction);
+
+
+    glm_vec3_cross(up, direction, cameraRight);
+    glm_normalize(cameraRight);
+
+    glm_vec3_cross(direction, cameraRight, camreaUp);
 
     // Frame procedure: handle input; update shared camera/projection uniforms;
     // clear color/depth; bind textures and VAO; draw every cube with its own
@@ -251,7 +264,7 @@ int main(void) {
         // -----
         process_input(window);
 
-        mat4 model, view, projection;
+        mat4 model, projection;
         // glm_mat4_identity(model);
         glm_mat4_identity(view);
         glm_mat4_identity(projection);
@@ -261,7 +274,20 @@ int main(void) {
         // glm_rotate(model, (float)glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
 
         // View: Move the camera back 3 units so the object isn't inside our face
-        glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
+        // glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
+        // glm_lookat((vec3){ 0.0f, 0.0f, 3.0f },
+        //    (vec3){ 0.0f, 0.0f, 0.0f },
+        //    (vec3){ 0.0f, 1.0f, 0.0f },
+        //    view);
+
+        const float radius = 10.0f;
+        float camX = sin(glfwGetTime()) * radius;
+        float camZ = cos(glfwGetTime()) * radius;
+
+        glm_lookat((vec3){camX, 0.0f, camZ},
+                   (vec3){0.0f, 0.0f, 0.0f},
+                   (vec3){0.0f, 1.0f, 0.0f},
+                   view);
 
         // Projection: Use window_width and window_height (NOT width/height from the texture)
         glm_perspective(glm_rad(57.0f), (float)window_width / (float)window_height, 0.1f, 100.0f, projection);
