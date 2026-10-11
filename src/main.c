@@ -21,8 +21,10 @@
 #include "lib/utlis.h"
 #include "lib/shader.h"
 #include "lib/stb_image.h"
+#include "lib/types.h"
 
 #include "cglm/cglm.h"
+#include <string.h>
 
 // GLFW calls this when the drawable framebuffer changes size. The viewport
 // must use framebuffer pixels (not necessarily logical window points), or
@@ -37,13 +39,44 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int hight) {
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void process_input(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, 1);
+void process_input(GLFWwindow* window, LinkedList* list) {
+    int allowed_keys[] = {
+        GLFW_KEY_ESCAPE,
+        GLFW_KEY_ENTER, 
+        GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, 
+        GLFW_KEY_LEFT_SHIFT, 
+        GLFW_KEY_SPACE
+    };
+    
+    for (int index = 0; index < 8; index++) {
+        if (glfwGetKey(window, allowed_keys[index]) == GLFW_PRESS) {
+            add_node_to_list(list, allowed_keys[index], sizeof(int));
+        }
     }
 }
 
+// Engine lifecycle (work in progress):
+// 1. Bootstrap: initialize the platform, window, and OpenGL context.
+// 2. Resource setup: create shaders, meshes, textures, cameras, and scene data.
+// 3. Runtime loop: collect input, update actors/systems, render the scene, and present the frame.
+// 4. Shutdown: release GPU/state resources, destroy the window, and clean up native subsystems.
+//
+// TODO: split this monolithic entry point into engine subsystems such as
+// window management, input, scene graph / ECS, rendering, physics, and asset loading.
+// TODO: add a dedicated engine runtime state object so the app lifecycle is explicit
+// and easier to extend as the project grows.
+// TODO: move frame timing and fixed-step updates behind a proper game loop abstraction.
+
 int main(void) {
+    LinkedList list = {0};
+
+    // add_node(&list, (void*)"fmt", 4);
+
+    // printf("%s\n", (char*)list.head->value);
+
+
+    free(list.head);
+    
     // The frame limiter measures each complete loop iteration. The dimensions
     // are also used for the initial viewport and projection aspect ratio.
     // Note: the resize callback updates the viewport, but these two values
@@ -85,6 +118,11 @@ int main(void) {
     glViewport(0, 0, window_width, window_height);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    // Lifecycle note: this is still the startup phase. The engine is building a
+    // minimal runtime state for the window, OpenGL context, and initial scene.
+    // TODO: separate engine initialization from game-specific scene setup so the
+    // runtime can be reused by multiple scenes or levels.
 
     // Interleaved vertex format: position (x, y, z), then texture coordinates
     // (u, v). Each record is five floats; the mesh helper configures locations
@@ -252,16 +290,24 @@ int main(void) {
 
     glm_vec3_cross(direction, cameraRight, camreaUp);
 
+    // TODO: build a scene graph or entity list here so model instances are
+    // managed by the engine instead of being hard-coded in the main loop.
+    // TODO: decide whether camera motion, model transform, and gameplay state
+    // belong to a game layer or the engine core.
+
     // Frame procedure: handle input; update shared camera/projection uniforms;
     // clear color/depth; bind textures and VAO; draw every cube with its own
     // model matrix; present the frame and poll events; then wait toward the
     // configured cap. The sleep is approximate because milliseconds are
     // truncated and the timer uses wall-clock TIME_UTC.
+    // This is the live runtime phase of the engine lifecycle.
     while (!glfwWindowShouldClose(window)) {
         timespec_get(&start_time, TIME_UTC);
         // input
         // -----
-        process_input(window);
+        // TODO: move this into an actual input system with key mapping, mouse
+        // capture, and input buffering for gameplay and UI.
+        process_input(window, &list);
 
         mat4 model, view, projection;
         // glm_mat4_identity(model);
@@ -279,6 +325,17 @@ int main(void) {
         //    (vec3){ 0.0f, 1.0f, 0.0f },
         //    view);
 
+        // TODO: this is the update phase of the engine lifecycle. Add a real
+        // simulation/update step for gameplay logic, physics, animation, and AI.
+        // This should happen before the render pass so transformed data is ready
+        // for the next frame.
+
+        // =====================================================================
+        // drawing happens here
+        // =====================================================================
+        // TODO: split this into render passes: opaque scene, transparent objects,
+        // UI overlay, and debug draw. The present code mixes scene setup and draw
+        // submission in a single block.
         const float radius = 10.0f;
         float camX = sin(glfwGetTime()) * radius;
         float camZ = cos(glfwGetTime()) * radius;
@@ -361,6 +418,11 @@ int main(void) {
     }
 
 
+    // Shutdown phase: release render resources and native subsystems before the
+    // engine exits. This is intentionally lightweight right now and is the next
+    // major area to formalize as the project grows.
+    // TODO: add a centralized resource manager so textures, shaders, meshes, and
+    // buffers are destroyed in a consistent order and no leaks remain.
     if (mesh_buffers != NULL) {
         free(mesh_buffers);
         mesh_buffers = NULL;

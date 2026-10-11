@@ -7,6 +7,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 add_executable(fox_engine
     src/main.c
     src/lib/utils.c
+    src/lib/types.c
     src/lib/shader.c
     src/lib/stb_image.c
     external/glad/src/glad.c
