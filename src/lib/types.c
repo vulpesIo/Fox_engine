@@ -34,7 +34,7 @@ void add_node_to_list(LinkedList* list, void* value, size_t size) {
     fflush(stderr);
     exit(1);
   }
-  
+
   new_node->size = size;
   new_node->value = value;
 
@@ -50,6 +50,30 @@ void add_node_to_list(LinkedList* list, void* value, size_t size) {
     list->tail->next = new_node;
     list->tail = new_node;
   }
+}
+
+void pre_pend_to_list(LinkedList *list, void *value, size_t size) {
+    Node *new_node = malloc(sizeof(Node));
+
+    if (!new_node) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+
+    new_node->size = size;
+    new_node->value = value;
+    new_node->prev = NULL;
+    new_node->next = list->head;
+
+    if (list->head) {
+        list->head->prev = new_node;
+    } else {
+        // The list is empty, so the new node is also the tail.
+        list->tail = new_node;
+    }
+
+    list->head = new_node;
+    list->length++;
 }
 
 Node* pop_list(LinkedList* list) {

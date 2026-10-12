@@ -42,15 +42,15 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int hight) {
 void process_input(GLFWwindow* window, LinkedList* list) {
     int allowed_keys[] = {
         GLFW_KEY_ESCAPE,
-        GLFW_KEY_ENTER, 
-        GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, 
-        GLFW_KEY_LEFT_SHIFT, 
+        GLFW_KEY_ENTER,
+        GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D,
+        GLFW_KEY_LEFT_SHIFT,
         GLFW_KEY_SPACE
     };
-    
+
     for (int index = 0; index < 8; index++) {
         if (glfwGetKey(window, allowed_keys[index]) == GLFW_PRESS) {
-            add_node_to_list(list, allowed_keys[index], sizeof(int));
+            pre_pend_to_list(list, &allowed_keys[index], sizeof(allowed_keys[index]));
         }
     }
 }
@@ -71,12 +71,8 @@ int main(void) {
     LinkedList list = {0};
 
     // add_node(&list, (void*)"fmt", 4);
-
-    // printf("%s\n", (char*)list.head->value);
-
-
     free(list.head);
-    
+
     // The frame limiter measures each complete loop iteration. The dimensions
     // are also used for the initial viewport and projection aspect ratio.
     // Note: the resize callback updates the viewport, but these two values

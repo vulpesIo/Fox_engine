@@ -16,7 +16,7 @@ typedef struct Node{
   struct Node* prev;
 } Node;
 
-typedef struct LinkedList{ 
+typedef struct LinkedList{
   int length;
   Node* head;
   Node* tail;
@@ -25,6 +25,8 @@ typedef struct LinkedList{
 int return_points(Point* data, double* out_x, double* out_y, double* out_z);
 
 void add_node_to_list(LinkedList* list, void* value, size_t size);
+
+void pre_pend_to_list(LinkedList* list, void* value, size_t size);
 
 Node* pop_list(LinkedList* list);
 
