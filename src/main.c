@@ -1,3 +1,5 @@
+#include "cglm/util.h"
+#include "cglm/vec3.h"
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -55,6 +57,17 @@ void process_input(GLFWwindow* window, LinkedList* list) {
     }
 }
 
+float lastX = 400, lastY = 300;
+float xoffset = 0.0f;
+float yoffset = 0.0f;
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    xoffset += (float)(xpos - lastX);
+    yoffset -= (float)(ypos - lastY);
+    lastX = (float)xpos;
+    lastY = (float)ypos;
+}
+
 // Engine lifecycle (work in progress):
 // 1. Bootstrap: initialize the platform, window, and OpenGL context.
 // 2. Resource setup: create shaders, meshes, textures, cameras, and scene data.
@@ -102,6 +115,10 @@ int main(void) {
     }
 
     glfwMakeContextCurrent(window);
+    // hide cursor and clamp it to the window
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
+
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -268,23 +285,7 @@ int main(void) {
 
     mat4 model;
 
-    // vec3 cameraPos = {0.0f, 0.0f, 3.0f};
-    // vec3 targetPos = {0.0f, 0.0f, 0.0f};
-    // vec3 up = {0.0f, 1.0f, 0.0f};
 
-
-    // vec3 direction;
-    // vec3 cameraRight;
-    // vec3 camreaUp;
-
-    // glm_vec3_sub(cameraPos, targetPos, direction);
-    // glm_normalize(direction);
-
-
-    // glm_vec3_cross(up, direction, cameraRight);
-    // glm_normalize(cameraRight);
-
-    // glm_vec3_cross(direction, cameraRight, camreaUp);
     vec3 cameraFront = {0.0f, 0.0f, -1.0f};
     vec3 cameraPos   = {0.0f, 0.0f,  3.0f};
     vec3 cameraUp    = {0.0f, 1.0f,  0.0f};
@@ -319,9 +320,17 @@ int main(void) {
     // configured cap. The sleep is approximate because milliseconds are
     // truncated and the timer uses wall-clock TIME_UTC.
     // This is the live runtime phase of the engine lifecycle.
+    //
+
+    // mouse
+    float yaw = -90.0f;
+    float pitch = 0.0f;
+
+
     float delta_time = 0.0f;                 // seconds the previous frame took
     float last_frame = (float)glfwGetTime();
     struct timespec frame_start , end_time;
+
     while (!glfwWindowShouldClose(window)) {
         timespec_get(&frame_start , TIME_UTC);
         // input
@@ -331,11 +340,6 @@ int main(void) {
         // process_input(window, &list);
 
         mat4 model, view, projection;
-        // glm_mat4_identity(model);
-        vec3 target;
-        glm_vec3_add(cameraPos, cameraFront, target);
-        glm_lookat(cameraPos, target, cameraUp, view);
-        glm_mat4_identity(projection);
 
         float current_frame = (float)glfwGetTime();  // for movement
             delta_time = current_frame - last_frame;
@@ -347,10 +351,30 @@ int main(void) {
         // TODO: map out the inputs to the translation
 
         float cameraSpeed = 2.5f * delta_time;
+
+
+        const float sensitivity = 0.01f;
+        // xoffset *= sensitivity;
+        // yoffset *= sensitivity;
+
+        yaw += xoffset * sensitivity;
+        pitch += yoffset * sensitivity;
+
+        xoffset = 0.0f;
+        yoffset = 0.0f;
+
+        if (pitch > 89.0f)
+            pitch = 89.0f;
+
+        if (pitch < -89.0f)
+            pitch = -89.0f;
+
         vec3 cameraRight;
         glm_vec3_cross(cameraFront, cameraUp, cameraRight);
         glm_vec3_normalize(cameraRight);
 
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, 1);
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             glm_vec3_muladds(cameraFront, cameraSpeed, cameraPos);
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -359,6 +383,24 @@ int main(void) {
             glm_vec3_muladds(cameraRight, -cameraSpeed, cameraPos);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             glm_vec3_muladds(cameraRight, cameraSpeed, cameraPos);
+
+        vec3 direction;
+
+        direction[0] = cosf(glm_rad(yaw)) * cosf(glm_rad(pitch));
+        direction[1] = sinf(glm_rad(pitch));
+        direction[2] = sinf(glm_rad(yaw)) * cosf(glm_rad(pitch));
+
+        glm_vec3_normalize(direction);
+        glm_vec3_copy(direction, cameraFront);
+
+        // glm_vec3_cross(float *a, float *b, float *dest)
+        // glm_vec3_normalize();
+
+        // glm_mat4_identity(model);
+        vec3 target;
+        glm_vec3_add(cameraPos, cameraFront, target);
+        glm_lookat(cameraPos, target, cameraUp, view);
+        glm_mat4_identity(projection);
 
         // TODO: this is the update phase of the engine lifecycle. Add a real
         // simulation/update step for gameplay logic, physics, animation, and AI.
