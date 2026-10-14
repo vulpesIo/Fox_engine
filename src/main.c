@@ -71,13 +71,12 @@ int main(void) {
     LinkedList list = {0};
 
     // add_node(&list, (void*)"fmt", 4);
-    free(list.head);
+    // free(list.head);
 
     // The frame limiter measures each complete loop iteration. The dimensions
     // are also used for the initial viewport and projection aspect ratio.
     // Note: the resize callback updates the viewport, but these two values
     // remain unchanged, so the projection aspect ratio is fixed after startup.
-    struct timespec start_time, end_time;
 
     int frame_cap = 60;
     int window_width = 800;
@@ -269,22 +268,45 @@ int main(void) {
 
     mat4 model;
 
-    vec3 cameraPos = {0.0f, 0.0f, 3.0f};
-    vec3 targetPos = {0.0f, 0.0f, 0.0f};
-    vec3 up = {0.0f, 1.0f, 0.0f};
+    // vec3 cameraPos = {0.0f, 0.0f, 3.0f};
+    // vec3 targetPos = {0.0f, 0.0f, 0.0f};
+    // vec3 up = {0.0f, 1.0f, 0.0f};
+
+
+    // vec3 direction;
+    // vec3 cameraRight;
+    // vec3 camreaUp;
+
+    // glm_vec3_sub(cameraPos, targetPos, direction);
+    // glm_normalize(direction);
+
+
+    // glm_vec3_cross(up, direction, cameraRight);
+    // glm_normalize(cameraRight);
+
+    // glm_vec3_cross(direction, cameraRight, camreaUp);
+    vec3 cameraFront = {0.0f, 0.0f, -1.0f};
+    vec3 cameraPos   = {0.0f, 0.0f,  3.0f};
+    vec3 cameraUp    = {0.0f, 1.0f,  0.0f};
 
     vec3 direction;
     vec3 cameraRight;
-    vec3 camreaUp;
+    vec3 target;
 
-    glm_vec3_sub(cameraPos, targetPos, direction);
-    glm_normalize(direction);
+    // target = cameraPos + cameraFront
+    glm_vec3_add(cameraPos, cameraFront, target);
 
+    // direction = cameraPos - target
+    glm_vec3_sub(cameraPos, target, direction);
+    glm_vec3_normalize(direction);
 
-    glm_vec3_cross(up, direction, cameraRight);
-    glm_normalize(cameraRight);
+    // cameraRight = normalize(cross(cameraUp, direction))
+    glm_vec3_cross(cameraUp, direction, cameraRight);
+    glm_vec3_normalize(cameraRight);
 
-    glm_vec3_cross(direction, cameraRight, camreaUp);
+    // Recalculate cameraUp
+    glm_vec3_cross(direction, cameraRight, cameraUp);
+    glm_vec3_normalize(cameraUp);
 
     // TODO: build a scene graph or entity list here so model instances are
     // managed by the engine instead of being hard-coded in the main loop.
@@ -297,29 +319,46 @@ int main(void) {
     // configured cap. The sleep is approximate because milliseconds are
     // truncated and the timer uses wall-clock TIME_UTC.
     // This is the live runtime phase of the engine lifecycle.
+    float delta_time = 0.0f;                 // seconds the previous frame took
+    float last_frame = (float)glfwGetTime();
+    struct timespec frame_start , end_time;
     while (!glfwWindowShouldClose(window)) {
-        timespec_get(&start_time, TIME_UTC);
+        timespec_get(&frame_start , TIME_UTC);
         // input
         // -----
         // TODO: move this into an actual input system with key mapping, mouse
         // capture, and input buffering for gameplay and UI.
-        process_input(window, &list);
+        // process_input(window, &list);
 
         mat4 model, view, projection;
         // glm_mat4_identity(model);
-        glm_mat4_identity(view);
+        vec3 target;
+        glm_vec3_add(cameraPos, cameraFront, target);
+        glm_lookat(cameraPos, target, cameraUp, view);
         glm_mat4_identity(projection);
+
+        float current_frame = (float)glfwGetTime();  // for movement
+            delta_time = current_frame - last_frame;
+            last_frame = current_frame;
 
         // 2. Apply transformations
         // Model: Rotate the quad slightly over time
         // glm_rotate(model, (float)glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
+        // TODO: map out the inputs to the translation
 
-        // View: Move the camera back 3 units so the object isn't inside our face
-        // glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
-        // glm_lookat((vec3){ 0.0f, 0.0f, 3.0f },
-        //    (vec3){ 0.0f, 0.0f, 0.0f },
-        //    (vec3){ 0.0f, 1.0f, 0.0f },
-        //    view);
+        float cameraSpeed = 2.5f * delta_time;
+        vec3 cameraRight;
+        glm_vec3_cross(cameraFront, cameraUp, cameraRight);
+        glm_vec3_normalize(cameraRight);
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            glm_vec3_muladds(cameraFront, cameraSpeed, cameraPos);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            glm_vec3_muladds(cameraFront, -cameraSpeed, cameraPos);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            glm_vec3_muladds(cameraRight, -cameraSpeed, cameraPos);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            glm_vec3_muladds(cameraRight, cameraSpeed, cameraPos);
 
         // TODO: this is the update phase of the engine lifecycle. Add a real
         // simulation/update step for gameplay logic, physics, animation, and AI.
@@ -332,14 +371,14 @@ int main(void) {
         // TODO: split this into render passes: opaque scene, transparent objects,
         // UI overlay, and debug draw. The present code mixes scene setup and draw
         // submission in a single block.
-        const float radius = 10.0f;
-        float camX = sin(glfwGetTime()) * radius;
-        float camZ = cos(glfwGetTime()) * radius;
+        // const float radius = 10.0f;
+        // float camX = sin(glfwGetTime()) * radius;
+        // float camZ = cos(glfwGetTime()) * radius;
 
-        glm_lookat((vec3){camX, 0.0f, camZ},
-                   (vec3){0.0f, 0.0f, 0.0f},
-                   (vec3){0.0f, 1.0f, 0.0f},
-                   view);
+        // glm_lookat((vec3){camX, 0.0f, camZ},
+        //            (vec3){0.0f, 0.0f, 0.0f},
+        //            (vec3){0.0f, 1.0f, 0.0f},
+        //            view);
 
         // Projection: Use window_width and window_height (NOT width/height from the texture)
         glm_perspective(glm_rad(57.0f), (float)window_width / (float)window_height, 0.1f, 100.0f, projection);
@@ -404,7 +443,7 @@ int main(void) {
 
 
         timespec_get(&end_time, TIME_UTC);
-        double elapsed_time_ms = (get_elapsed_seconds(start_time, end_time) * 1000.0);
+        double elapsed_time_ms = (get_elapsed_seconds(frame_start , end_time) * 1000.0);
         double ms_cap = 1000.0 / frame_cap;
 
         if (elapsed_time_ms < ms_cap) {
