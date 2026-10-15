@@ -57,11 +57,19 @@ void process_input(GLFWwindow* window, LinkedList* list) {
     }
 }
 
-float lastX = 400, lastY = 300;
+float lastX = 0.0f, lastY = 0.0f;
 float xoffset = 0.0f;
 float yoffset = 0.0f;
+int firstMouse = 1;
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = (float)xpos;
+        lastY = (float)ypos;
+        firstMouse = 0;
+        return;
+    }
+
     xoffset += (float)(xpos - lastX);
     yoffset -= (float)(ypos - lastY);
     lastX = (float)xpos;
@@ -73,7 +81,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 // 2. Resource setup: create shaders, meshes, textures, cameras, and scene data.
 // 3. Runtime loop: collect input, update actors/systems, render the scene, and present the frame.
 // 4. Shutdown: release GPU/state resources, destroy the window, and clean up native subsystems.
-//
+
 // TODO: split this monolithic entry point into engine subsystems such as
 // window management, input, scene graph / ECS, rendering, physics, and asset loading.
 // TODO: add a dedicated engine runtime state object so the app lifecycle is explicit
@@ -352,10 +360,7 @@ int main(void) {
 
         float cameraSpeed = 2.5f * delta_time;
 
-
-        const float sensitivity = 0.01f;
-        // xoffset *= sensitivity;
-        // yoffset *= sensitivity;
+        const float sensitivity = 0.1f;
 
         yaw += xoffset * sensitivity;
         pitch += yoffset * sensitivity;
