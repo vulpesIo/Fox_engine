@@ -1,29 +1,46 @@
 #ifndef CAMERA
 #define CAMERA
 
-#include "cglm/cglm.h"";
+#include "cglm/cglm.h"
 #include "cglm/types.h"
 
-const float YAW         = -90.0f;
-const float PITCH       =  0.0f;
-const float SPEED       =  2.5f;
-const float SENSITIVITY =  0.1f;
-const float ZOOM        =  45.0f;
+typedef enum {
+    FORWARD, BACKWARD,
+    LEFT, RIGHT
+} Camera_Movement;
 
+extern float YAW;
+extern float PITCH;
+extern float SPEED;
+extern float SENSITIVITY;
+extern float ZOOM;
 
 // camera Attributes
-vec3 Position;
-vec3 Front;
-vec3 Up;
-vec3 Right;
-vec3 WorldUp;
+extern vec3 Position;
+extern vec3 Front;
+extern vec3 Up;
+extern vec3 Right;
+extern vec3 WorldUp;
 
 // euler Angles
-float Yaw;
-float Pitch;
+extern float Yaw;
+extern float Pitch;
+
 // camera options
-float MovementSpeed;
-float MouseSensitivity;
-float Zoom;
+extern float MovementSpeed;
+extern float MouseSensitivity;
+extern float Zoom;
+
+void create_camera(vec3 position, vec3 up, float yaw, float pitch);
+
+void GetViewMatrix(mat4 matrix);
+
+void ProcessKeyBoard(Camera_Movement direction, float deltaTime);
+
+void ProcessMouseMovement(float xoffset, float yoffset, int constrainPitch);
+
+void ProcessMouseScroll(float yoffset);
+
+void _updateCameraVectors();
 
 #endif

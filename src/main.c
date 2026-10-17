@@ -1,9 +1,11 @@
 #include "cglm/util.h"
 #include "cglm/vec3.h"
+#include "lib/camera.h"
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #if defined(_WIN32)
     #include <windows.h>
@@ -58,22 +60,26 @@ void process_input(GLFWwindow* window, LinkedList* list) {
 }
 
 float lastX = 0.0f, lastY = 0.0f;
-float xoffset = 0.0f;
-float yoffset = 0.0f;
 int firstMouse = 1;
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    if (firstMouse) {
-        lastX = (float)xpos;
-        lastY = (float)ypos;
-        firstMouse = 0;
-        return;
+    // float xpos = static_cast<float>(xposIn);
+    // float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
     }
 
-    xoffset += (float)(xpos - lastX);
-    yoffset -= (float)(ypos - lastY);
-    lastX = (float)xpos;
-    lastY = (float)ypos;
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    ProcessMouseMovement(xoffset, yoffset, 1);
 }
 
 // Engine lifecycle (work in progress):
@@ -253,7 +259,7 @@ int main(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    unsigned char *faceTexture = stbi_load("src/assets/awesomeface.png", &width, &height, &nrChannels, 0);
+    unsigned char *faceTexture = stbi_load("E:/Code/Fox_engine/src/assets/awesomeface.png", &width, &height, &nrChannels, 0);
     if (faceTexture)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, faceTexture);
@@ -276,7 +282,7 @@ int main(void) {
 
     // Shader and image paths are relative to the process working directory.
     // Run from the repository root for these src/assets/... paths to resolve.
-    Shader ourShader = shader_create("src/assets/vertex_shader.vs", "src/assets/fragment_shader.fs");
+    Shader ourShader = shader_create("E:/Code/Fox_engine/src/assets/vertex_shader.vs", "E:/Code/Fox_engine/src/assets/fragment_shader.fs");
 
     // Upload the interleaved vertex data and configure the VAO's attribute
     // layout. The EBO is created too, although this scene currently draws the
@@ -292,30 +298,11 @@ int main(void) {
     shader_set_int(&ourShader, "texture2", 1);
 
     mat4 model;
+    vec3 initialPosition = {0.0f, 0.0f, 3.0f};
+    vec3 initialUp = {0.0f, 1.0f, 0.0f};
 
+    create_camera(initialPosition, initialUp, -90.0f, 0.0f);
 
-    vec3 cameraFront = {0.0f, 0.0f, -1.0f};
-    vec3 cameraPos   = {0.0f, 0.0f,  3.0f};
-    vec3 cameraUp    = {0.0f, 1.0f,  0.0f};
-
-    vec3 direction;
-    vec3 cameraRight;
-    vec3 target;
-
-    // target = cameraPos + cameraFront
-    glm_vec3_add(cameraPos, cameraFront, target);
-
-    // direction = cameraPos - target
-    glm_vec3_sub(cameraPos, target, direction);
-    glm_vec3_normalize(direction);
-
-    // cameraRight = normalize(cross(cameraUp, direction))
-    glm_vec3_cross(cameraUp, direction, cameraRight);
-    glm_vec3_normalize(cameraRight);
-
-    // Recalculate cameraUp
-    glm_vec3_cross(direction, cameraRight, cameraUp);
-    glm_vec3_normalize(cameraUp);
 
     // TODO: build a scene graph or entity list here so model instances are
     // managed by the engine instead of being hard-coded in the main loop.
@@ -326,7 +313,7 @@ int main(void) {
     // clear color/depth; bind textures and VAO; draw every cube with its own
     // model matrix; present the frame and poll events; then wait toward the
     // configured cap. The sleep is approximate because milliseconds are
-    // truncated and the timer uses wall-clock TIME_UTC.
+    // truncated; timing uses glfwGetTime(), a monotonic clock in seconds.
     // This is the live runtime phase of the engine lifecycle.
     //
 
@@ -337,10 +324,10 @@ int main(void) {
 
     float delta_time = 0.0f;                 // seconds the previous frame took
     float last_frame = (float)glfwGetTime();
-    struct timespec frame_start , end_time;
+    double frame_start, end_time;            // frame limiter timestamps (seconds)
 
     while (!glfwWindowShouldClose(window)) {
-        timespec_get(&frame_start , TIME_UTC);
+        frame_start = glfwGetTime();
         // input
         // -----
         // TODO: move this into an actual input system with key mapping, mouse
@@ -358,54 +345,24 @@ int main(void) {
         // glm_rotate(model, (float)glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
         // TODO: map out the inputs to the translation
 
-        float cameraSpeed = 2.5f * delta_time;
-
-        const float sensitivity = 0.1f;
-
-        yaw += xoffset * sensitivity;
-        pitch += yoffset * sensitivity;
-
-        xoffset = 0.0f;
-        yoffset = 0.0f;
-
-        if (pitch > 89.0f)
-            pitch = 89.0f;
-
-        if (pitch < -89.0f)
-            pitch = -89.0f;
-
-        vec3 cameraRight;
-        glm_vec3_cross(cameraFront, cameraUp, cameraRight);
-        glm_vec3_normalize(cameraRight);
-
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, 1);
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            glm_vec3_muladds(cameraFront, cameraSpeed, cameraPos);
+            ProcessKeyBoard(FORWARD, delta_time);
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            glm_vec3_muladds(cameraFront, -cameraSpeed, cameraPos);
+            ProcessKeyBoard(BACKWARD, delta_time);
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            glm_vec3_muladds(cameraRight, -cameraSpeed, cameraPos);
+            ProcessKeyBoard(RIGHT, delta_time);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            glm_vec3_muladds(cameraRight, cameraSpeed, cameraPos);
-
-        vec3 direction;
-
-        direction[0] = cosf(glm_rad(yaw)) * cosf(glm_rad(pitch));
-        direction[1] = sinf(glm_rad(pitch));
-        direction[2] = sinf(glm_rad(yaw)) * cosf(glm_rad(pitch));
-
-        glm_vec3_normalize(direction);
-        glm_vec3_copy(direction, cameraFront);
+            ProcessKeyBoard(LEFT, delta_time);
 
         // glm_vec3_cross(float *a, float *b, float *dest)
         // glm_vec3_normalize();
 
         // glm_mat4_identity(model);
         vec3 target;
-        glm_vec3_add(cameraPos, cameraFront, target);
-        glm_lookat(cameraPos, target, cameraUp, view);
-        glm_mat4_identity(projection);
+
+        GetViewMatrix(view);
 
         // TODO: this is the update phase of the engine lifecycle. Add a real
         // simulation/update step for gameplay logic, physics, animation, and AI.
@@ -428,7 +385,15 @@ int main(void) {
         //            view);
 
         // Projection: Use window_width and window_height (NOT width/height from the texture)
-        glm_perspective(glm_rad(57.0f), (float)window_width / (float)window_height, 0.1f, 100.0f, projection);
+        // glm_perspective(glm_rad(57.0f), (float)window_width / (float)window_height, 0.1f, 100.0f, projection);
+        glm_perspective(
+            glm_rad(Zoom),
+            (float)window_width / (float)window_height,
+            0.1f,
+            100.0f,
+            projection
+        );
+
 
         // 3. Send the matrices to the shader's uniform locations
         // unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
@@ -489,8 +454,8 @@ int main(void) {
         glfwPollEvents();
 
 
-        timespec_get(&end_time, TIME_UTC);
-        double elapsed_time_ms = (get_elapsed_seconds(frame_start , end_time) * 1000.0);
+        end_time = glfwGetTime();
+        double elapsed_time_ms = (end_time - frame_start) * 1000.0;
         double ms_cap = 1000.0 / frame_cap;
 
         if (elapsed_time_ms < ms_cap) {
